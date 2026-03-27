@@ -11,7 +11,7 @@
 - [x] Create categories router with full CRUD operations
 - [x] Create tags router with full CRUD operations
 - [x] Create custom fields router for field templates and instance management
-- [ ] Implement advanced search and filtering procedures (tag filtering, expiration date filtering)
+- [x] Implement advanced search and filtering procedures (tag filtering, expiration date filtering)
 - [x] Add owner notification system for account changes
 - [x] Create audit logging for account modifications
 
@@ -31,10 +31,10 @@
 
 ## Frontend - Search & Filtering
 - [x] Create search input for account names and descriptions
-- [ ] Build category filter dropdown
-- [ ] Build tags filter with multi-select
-- [ ] Build link status filter
-- [ ] Build expiration date range filter
+- [x] Build category filter dropdown
+- [x] Build tags filter with multi-select
+- [x] Build link status filter
+- [x] Build expiration date range filter
 - [ ] Implement filter persistence and URL state management
 
 ## Frontend - Categories & Tags Management
@@ -90,3 +90,13 @@
 - [x] Added edit/update functionality to CustomFieldsPage with dialog and mutations
 - [x] Updated DashboardLayout with proper navigation menu items (Dashboard, Accounts, Categories, Tags, Custom Fields, Notifications)
 - [x] Fixed sidebar active state detection to work with nested routes
+- [x] Implemented advanced filtering in backend (db.ts) - added support for tagIds and expirationDate range filtering
+- [x] Updated accounts.list procedure in routers.ts to accept tagIds, expirationDateFrom, and expirationDateTo filters
+- [x] Built comprehensive filter UI in AccountsPage with:
+  - Category dropdown filter
+  - Tags multi-select filter with visual tag buttons
+  - Link status filter (active, inactive, expired)
+  - Expiration date range filter (from/to dates)
+  - Clear filters button
+  - Filter badge showing active filter count
+- [x] Committed and pushed changes to GitHub
