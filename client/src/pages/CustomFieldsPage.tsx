@@ -23,6 +23,8 @@ import {
 
 export default function CustomFieldsPage() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingTemplateId, setEditingTemplateId] = useState<number | null>(null);
   const [formData, setFormData] = useState({
     name: "",
     fieldType: "text" as const,
@@ -51,6 +53,25 @@ export default function CustomFieldsPage() {
     },
   });
 
+  const updateTemplateMutation = trpc.customFields.updateTemplate.useMutation({
+    onSuccess: () => {
+      toast.success("Custom field updated successfully");
+      setFormData({
+        name: "",
+        fieldType: "text",
+        isRequired: false,
+        placeholder: "",
+        description: "",
+      });
+      setIsEditDialogOpen(false);
+      setEditingTemplateId(null);
+      refetch();
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to update custom field");
+    },
+  });
+
   const deleteTemplateMutation = trpc.customFields.deleteTemplate.useMutation({
     onSuccess: () => {
       toast.success("Custom field deleted successfully");
@@ -75,6 +96,37 @@ export default function CustomFieldsPage() {
       placeholder: formData.placeholder || undefined,
       description: formData.description || undefined,
     });
+  };
+
+  const handleEditTemplate = (template: any) => {
+    setEditingTemplateId(template.id);
+    setFormData({
+      name: template.name,
+      fieldType: template.fieldType,
+      isRequired: template.isRequired || false,
+      placeholder: template.placeholder || "",
+      description: template.description || "",
+    });
+    setIsEditDialogOpen(true);
+  };
+
+  const handleUpdateTemplate = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.name.trim()) {
+      toast.error("Field name is required");
+      return;
+    }
+
+    if (editingTemplateId !== null) {
+      updateTemplateMutation.mutate({
+        id: editingTemplateId,
+        name: formData.name,
+        fieldType: formData.fieldType,
+        isRequired: formData.isRequired,
+        placeholder: formData.placeholder || undefined,
+        description: formData.description || undefined,
+      });
+    }
   };
 
   const handleDeleteTemplate = (id: number) => {
@@ -162,6 +214,72 @@ export default function CustomFieldsPage() {
             </form>
           </DialogContent>
         </Dialog>
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Edit Custom Field</DialogTitle>
+              <DialogDescription>Update the custom field template</DialogDescription>
+            </DialogHeader>
+            <form onSubmit={handleUpdateTemplate} className="space-y-4">
+              <div>
+                <label className="text-sm font-medium">Field Name *</label>
+                <Input
+                  placeholder="e.g., Security Question"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  required
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Field Type *</label>
+                <Select value={formData.fieldType} onValueChange={(value: any) => setFormData({ ...formData, fieldType: value })}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="text">Text</SelectItem>
+                    <SelectItem value="number">Number</SelectItem>
+                    <SelectItem value="date">Date</SelectItem>
+                    <SelectItem value="select">Select</SelectItem>
+                    <SelectItem value="checkbox">Checkbox</SelectItem>
+                    <SelectItem value="textarea">Textarea</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="text-sm font-medium">Placeholder</label>
+                <Input
+                  placeholder="Optional placeholder text"
+                  value={formData.placeholder}
+                  onChange={(e) => setFormData({ ...formData, placeholder: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Description</label>
+                <Input
+                  placeholder="Optional description"
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="isRequiredEdit"
+                  checked={formData.isRequired}
+                  onChange={(e) => setFormData({ ...formData, isRequired: e.target.checked })}
+                  className="rounded border"
+                />
+                <label htmlFor="isRequiredEdit" className="text-sm font-medium">
+                  Required field
+                </label>
+              </div>
+              <Button type="submit" className="w-full" disabled={updateTemplateMutation.isPending}>
+                {updateTemplateMutation.isPending ? "Updating..." : "Update Field"}
+              </Button>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
 
       <div className="grid gap-4">
@@ -185,7 +303,11 @@ export default function CustomFieldsPage() {
                 )}
               </div>
               <div className="flex gap-2">
-                <Button variant="ghost" size="sm">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleEditTemplate(template)}
+                >
                   <Edit className="h-4 w-4" />
                 </Button>
                 <Button
