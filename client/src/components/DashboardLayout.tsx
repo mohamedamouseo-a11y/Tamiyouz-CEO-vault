@@ -21,15 +21,19 @@ import {
 } from "@/components/ui/sidebar";
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, LogOut, PanelLeft, Users } from "lucide-react";
+import { LayoutDashboard, LogOut, PanelLeft, Users, FolderOpen, Tag, Settings, Bell } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
 
 const menuItems = [
-  { icon: LayoutDashboard, label: "Page 1", path: "/" },
-  { icon: Users, label: "Page 2", path: "/some-path" },
+  { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
+  { icon: Users, label: "Accounts", path: "/dashboard/accounts" },
+  { icon: FolderOpen, label: "Categories", path: "/dashboard/categories" },
+  { icon: Tag, label: "Tags", path: "/dashboard/tags" },
+  { icon: Settings, label: "Custom Fields", path: "/dashboard/custom-fields" },
+  { icon: Bell, label: "Notifications", path: "/dashboard/notifications" },
 ];
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";
@@ -112,7 +116,7 @@ function DashboardLayoutContent({
   const isCollapsed = state === "collapsed";
   const [isResizing, setIsResizing] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
-  const activeMenuItem = menuItems.find(item => item.path === location);
+  const activeMenuItem = menuItems.find(item => location.startsWith(item.path));
   const isMobile = useIsMobile();
 
   useEffect(() => {
@@ -185,13 +189,13 @@ function DashboardLayoutContent({
                 return (
                   <SidebarMenuItem key={item.path}>
                     <SidebarMenuButton
-                      isActive={isActive}
+                      isActive={isActive || location.startsWith(item.path)}
                       onClick={() => setLocation(item.path)}
                       tooltip={item.label}
                       className={`h-10 transition-all font-normal`}
                     >
                       <item.icon
-                        className={`h-4 w-4 ${isActive ? "text-primary" : ""}`}
+                        className={`h-4 w-4 ${(isActive || location.startsWith(item.path)) ? "text-primary" : ""}`}
                       />
                       <span>{item.label}</span>
                     </SidebarMenuButton>
