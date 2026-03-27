@@ -188,6 +188,9 @@ export const appRouter = router({
         search: z.string().optional(),
         isArchived: z.boolean().optional(),
         taskLinkStatus: z.string().optional(),
+        tagIds: z.array(z.number()).optional(),
+        expirationDateFrom: z.date().optional(),
+        expirationDateTo: z.date().optional(),
       }).optional())
       .query(({ ctx, input }) =>
         getAccounts(ctx.user.id, input)

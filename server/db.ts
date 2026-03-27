@@ -179,6 +179,8 @@ export async function getAccounts(userId: number, filters?: {
   isArchived?: boolean;
   tagIds?: number[];
   taskLinkStatus?: string;
+  expirationDateFrom?: Date;
+  expirationDateTo?: Date;
 }) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -201,11 +203,45 @@ export async function getAccounts(userId: number, filters?: {
     conditions.push(eq(accounts.taskLinkStatus, filters.taskLinkStatus));
   }
 
+  if (filters?.expirationDateFrom) {
+    conditions.push(gte(accounts.expirationDate, filters.expirationDateFrom));
+  }
+
+  if (filters?.expirationDateTo) {
+    conditions.push(lte(accounts.expirationDate, filters.expirationDateTo));
+  }
+
+  // Handle tag filtering
+  if (filters?.tagIds && filters.tagIds.length > 0) {
+    return db
+      .selectDistinct({
+        id: accounts.id,
+        userId: accounts.userId,
+        categoryId: accounts.categoryId,
+        name: accounts.name,
+        description: accounts.description,
+        username: accounts.username,
+        email: accounts.email,
+        password: accounts.password,
+        url: accounts.url,
+        notes: accounts.notes,
+        taskLinkStatus: accounts.taskLinkStatus,
+        expirationDate: accounts.expirationDate,
+        isArchived: accounts.isArchived,
+        createdAt: accounts.createdAt,
+        updatedAt: accounts.updatedAt,
+      })
+      .from(accounts)
+      .innerJoin(accountTags, eq(accounts.id, accountTags.accountId))
+      .where(and(and(...conditions), inArray(accountTags.tagId, filters.tagIds)))
+      .orderBy(desc(accounts.createdAt));
+  }
+
   return db
     .select()
     .from(accounts)
     .where(and(...conditions))
-    .orderBy(desc(accounts.createdAt));
+    .orderBy(desc(accounts.createdAt))
 }
 
 export async function getAccountById(id: number, userId: number) {
