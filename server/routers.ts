@@ -17,6 +17,8 @@ import {
   getAccountById,
   updateAccount,
   deleteAccount,
+  deleteAccountsBulk,
+  getAccountsCount,
   addTagToAccount,
   removeTagFromAccount,
   getAccountTags,

@@ -1,4 +1,4 @@
-import { eq, and, like, inArray, isNull, isNotNull, gte, lte, desc, asc } from "drizzle-orm";
+import { eq, and, like, inArray, isNull, isNotNull, gte, lte, desc, asc, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import {
   InsertUser,
@@ -181,6 +181,158 @@ export async function getAccounts(userId: number, filters?: {
   taskLinkStatus?: string;
   expirationDateFrom?: Date;
   expirationDateTo?: Date;
+  sortBy?: 'name' | 'email' | 'createdAt' | 'expirationDate';
+  sortOrder?: 'asc' | 'desc';
+  page?: number;
+  pageSize?: number;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const conditions = [eq(accounts.userId, userId)];
+
+  if (filters?.categoryId) {
+    conditions.push(eq(accounts.categoryId, filters.categoryId));
+  }
+
+  if (filters?.search) {
+    conditions.push(like(accounts.name, `%${filters.search}%`));
+  }
+
+  if (filters?.isArchived !== undefined) {
+    conditions.push(eq(accounts.isArchived, filters.isArchived));
+  }
+
+  if (filters?.taskLinkStatus) {
+    conditions.push(eq(accounts.taskLinkStatus, filters.taskLinkStatus));
+  }
+
+  if (filters?.expirationDateFrom) {
+    conditions.push(gte(accounts.expirationDate, filters.expirationDateFrom));
+  }
+
+  if (filters?.expirationDateTo) {
+    conditions.push(lte(accounts.expirationDate, filters.expirationDateTo));
+  }
+
+  // Determine sort column and order
+  const sortColumn = (() => {
+    switch (filters?.sortBy) {
+      case 'name': return accounts.name;
+      case 'email': return accounts.email;
+      case 'expirationDate': return accounts.expirationDate;
+      case 'createdAt':
+      default: return accounts.createdAt;
+    }
+  })();
+
+  const sortFn = filters?.sortOrder === 'asc' ? asc : desc;
+  const orderBy = sortFn(sortColumn);
+
+  // Handle tag filtering
+  if (filters?.tagIds && filters.tagIds.length > 0) {
+    let query = db
+      .selectDistinct({
+        id: accounts.id,
+        userId: accounts.userId,
+        categoryId: accounts.categoryId,
+        name: accounts.name,
+        description: accounts.description,
+        username: accounts.username,
+        email: accounts.email,
+        password: accounts.password,
+        url: accounts.url,
+        notes: accounts.notes,
+        taskLinkStatus: accounts.taskLinkStatus,
+        expirationDate: accounts.expirationDate,
+        isArchived: accounts.isArchived,
+        createdAt: accounts.createdAt,
+        updatedAt: accounts.updatedAt,
+      })
+      .from(accounts)
+      .innerJoin(accountTags, eq(accounts.id, accountTags.accountId))
+      .where(and(and(...conditions), inArray(accountTags.tagId, filters.tagIds)))
+      .orderBy(orderBy);
+
+    if (filters?.page && filters?.pageSize) {
+      const offset = (filters.page - 1) * filters.pageSize;
+      query = query.limit(filters.pageSize).offset(offset);
+    }
+
+    return query;
+  }
+
+  let query = db
+    .select()
+    .from(accounts)
+    .where(and(...conditions))
+    .orderBy(orderBy);
+
+  if (filters?.page && filters?.pageSize) {
+    const offset = (filters.page - 1) * filters.pageSize;
+    query = query.limit(filters.pageSize).offset(offset);
+  }
+
+  return query
+}
+
+export async function getAccountById(id: number, userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db
+    .select()
+    .from(accounts)
+    .where(and(eq(accounts.id, id), eq(accounts.userId, userId)))
+    .limit(1);
+  return result[0];
+}
+
+export async function updateAccount(id: number, data: Partial<InsertAccount>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return db.update(accounts).set(data).where(eq(accounts.id, id));
+}
+
+export async function deleteAccount(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return db.delete(accounts).where(eq(accounts.id, id));
+}
+
+export async function deleteAccountsBulk(ids: number[], userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // Verify all accounts belong to the user before deleting
+  const accountsToDelete = await db
+    .select({ id: accounts.id })
+    .from(accounts)
+    .where(and(inArray(accounts.id, ids), eq(accounts.userId, userId)));
+  
+  if (accountsToDelete.length === 0) {
+    throw new Error("No accounts found to delete");
+  }
+  
+  const accountIdsToDelete = accountsToDelete.map(a => a.id);
+  
+  // Delete associated tags
+  await db.delete(accountTags).where(inArray(accountTags.accountId, accountIdsToDelete));
+  
+  // Delete associated custom field values
+  await db.delete(customFieldValues).where(inArray(customFieldValues.accountId, accountIdsToDelete));
+  
+  // Delete the accounts
+  return db.delete(accounts).where(inArray(accounts.id, accountIdsToDelete));
+}
+
+export async function getAccountsCount(userId: number, filters?: {
+  categoryId?: number;
+  search?: string;
+  isArchived?: boolean;
+  tagIds?: number[];
+  taskLinkStatus?: string;
+  expirationDateFrom?: Date;
+  expirationDateTo?: Date;
 }) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -213,58 +365,20 @@ export async function getAccounts(userId: number, filters?: {
 
   // Handle tag filtering
   if (filters?.tagIds && filters.tagIds.length > 0) {
-    return db
-      .selectDistinct({
-        id: accounts.id,
-        userId: accounts.userId,
-        categoryId: accounts.categoryId,
-        name: accounts.name,
-        description: accounts.description,
-        username: accounts.username,
-        email: accounts.email,
-        password: accounts.password,
-        url: accounts.url,
-        notes: accounts.notes,
-        taskLinkStatus: accounts.taskLinkStatus,
-        expirationDate: accounts.expirationDate,
-        isArchived: accounts.isArchived,
-        createdAt: accounts.createdAt,
-        updatedAt: accounts.updatedAt,
-      })
+    const result = await db
+      .selectDistinct({ id: accounts.id })
       .from(accounts)
       .innerJoin(accountTags, eq(accounts.id, accountTags.accountId))
-      .where(and(and(...conditions), inArray(accountTags.tagId, filters.tagIds)))
-      .orderBy(desc(accounts.createdAt));
+      .where(and(and(...conditions), inArray(accountTags.tagId, filters.tagIds)));
+    return result.length;
   }
 
-  return db
-    .select()
-    .from(accounts)
-    .where(and(...conditions))
-    .orderBy(desc(accounts.createdAt))
-}
-
-export async function getAccountById(id: number, userId: number) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
   const result = await db
-    .select()
+    .select({ id: accounts.id })
     .from(accounts)
-    .where(and(eq(accounts.id, id), eq(accounts.userId, userId)))
-    .limit(1);
-  return result[0];
-}
-
-export async function updateAccount(id: number, data: Partial<InsertAccount>) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  return db.update(accounts).set(data).where(eq(accounts.id, id));
-}
-
-export async function deleteAccount(id: number) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  return db.delete(accounts).where(eq(accounts.id, id));
+    .where(and(...conditions));
+  
+  return result.length;
 }
 
 // ============= ACCOUNT-TAG OPERATIONS =============
