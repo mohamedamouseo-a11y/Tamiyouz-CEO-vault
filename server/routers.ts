@@ -193,9 +193,27 @@ export const appRouter = router({
         tagIds: z.array(z.number()).optional(),
         expirationDateFrom: z.date().optional(),
         expirationDateTo: z.date().optional(),
+        sortBy: z.enum(['name', 'email', 'createdAt', 'expirationDate']).optional(),
+        sortOrder: z.enum(['asc', 'desc']).optional(),
+        page: z.number().optional(),
+        pageSize: z.number().optional(),
       }).optional())
       .query(({ ctx, input }) =>
         getAccounts(ctx.user.id, input)
+      ),
+
+    count: protectedProcedure
+      .input(z.object({
+        categoryId: z.number().optional(),
+        search: z.string().optional(),
+        isArchived: z.boolean().optional(),
+        taskLinkStatus: z.string().optional(),
+        tagIds: z.array(z.number()).optional(),
+        expirationDateFrom: z.date().optional(),
+        expirationDateTo: z.date().optional(),
+      }).optional())
+      .query(({ ctx, input }) =>
+        getAccountsCount(ctx.user.id, input)
       ),
 
     getById: protectedProcedure
@@ -380,6 +398,45 @@ export const appRouter = router({
         });
 
         return { success: true };
+      }),
+
+    bulkDelete: protectedProcedure
+      .input(z.object({ ids: z.array(z.number()).min(1, "At least one account must be selected") }))
+      .mutation(async ({ ctx, input }) => {
+        const accountsToDelete = await Promise.all(
+          input.ids.map(id => getAccountById(id, ctx.user.id))
+        );
+
+        const validAccounts = accountsToDelete.filter(acc => acc !== undefined);
+        if (validAccounts.length === 0) {
+          throw new Error("No valid accounts found to delete");
+        }
+
+        if (validAccounts.length !== input.ids.length) {
+          throw new Error("Some accounts could not be found or do not belong to you");
+        }
+
+        await deleteAccountsBulk(input.ids, ctx.user.id);
+
+        for (const account of validAccounts) {
+          if (account) {
+            await createAuditLog({
+              userId: ctx.user.id,
+              accountId: account.id,
+              action: "delete",
+              description: `Deleted account: ${account.name}`,
+            });
+          }
+        }
+
+        await createNotification({
+          userId: ctx.user.id,
+          title: "Accounts Deleted",
+          content: `${validAccounts.length} account(s) have been deleted.`,
+          type: "account_deleted",
+        });
+
+        return { success: true, deletedCount: validAccounts.length };
       }),
   }),
 
