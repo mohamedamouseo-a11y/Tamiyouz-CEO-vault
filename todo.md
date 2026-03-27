@@ -4,33 +4,33 @@
 - [x] Design and implement complete database schema with accounts, categories, tags, custom fields, and audit tables
 - [x] Create Drizzle schema.ts with all required tables and relationships
 - [x] Run drizzle-kit generate and apply migrations
-- [ ] Create database helper functions for all CRUD operations
+- [x] Create database helper functions for all CRUD operations
 
 ## Backend - tRPC Routers
-- [ ] Create accounts router with create, read, update, delete, list procedures
-- [ ] Create categories router with full CRUD operations
-- [ ] Create tags router with full CRUD operations
-- [ ] Create custom fields router for field templates and instance management
-- [ ] Implement advanced search and filtering procedures
-- [ ] Add owner notification system for account changes
-- [ ] Create audit logging for account modifications
+- [x] Create accounts router with create, read, update, delete, list procedures
+- [x] Create categories router with full CRUD operations
+- [x] Create tags router with full CRUD operations
+- [x] Create custom fields router for field templates and instance management
+- [ ] Implement advanced search and filtering procedures (tag filtering, expiration date filtering)
+- [x] Add owner notification system for account changes
+- [x] Create audit logging for account modifications
 
 ## Frontend - Dashboard & Layout
-- [ ] Build DashboardLayout component with sidebar navigation
-- [ ] Create navigation menu with links to all sections
-- [ ] Implement user profile and logout functionality
-- [ ] Add responsive design for mobile and tablet views
+- [x] Build DashboardLayout component with sidebar navigation
+- [x] Create navigation menu with links to all sections
+- [x] Implement user profile and logout functionality
+- [x] Add responsive design for mobile and tablet views
 
 ## Frontend - Accounts Management
-- [ ] Create main Accounts page with interactive table display
+- [x] Create main Accounts page with interactive table display
 - [ ] Implement table sorting and pagination
-- [ ] Build account creation form with validation
-- [ ] Build account edit form with pre-filled data
-- [ ] Implement account deletion with confirmation
+- [x] Build account creation form with validation
+- [ ] Build account edit form with pre-filled data (in AccountDetailsPage)
+- [x] Implement account deletion with confirmation
 - [ ] Add bulk operations (select multiple, delete multiple)
 
 ## Frontend - Search & Filtering
-- [ ] Create search input for account names and descriptions
+- [x] Create search input for account names and descriptions
 - [ ] Build category filter dropdown
 - [ ] Build tags filter with multi-select
 - [ ] Build link status filter
@@ -38,37 +38,37 @@
 - [ ] Implement filter persistence and URL state management
 
 ## Frontend - Categories & Tags Management
-- [ ] Create categories management page with list and CRUD forms
-- [ ] Create tags management page with list and CRUD forms
-- [ ] Add inline editing for categories and tags
-- [ ] Implement category and tag deletion with confirmation
+- [x] Create categories management page with list and CRUD forms
+- [x] Create tags management page with list and CRUD forms
+- [x] Add inline editing for categories and tags
+- [x] Implement category and tag deletion with confirmation
 
 ## Frontend - Custom Fields System
-- [ ] Create custom fields configuration interface
-- [ ] Build field template creation form
-- [ ] Implement field type selector (text, number, date, select, checkbox)
+- [x] Create custom fields configuration interface
+- [x] Build field template creation form
+- [x] Implement field type selector (text, number, date, select, checkbox)
 - [ ] Build field instance rendering for account forms
 - [ ] Add field validation and required field handling
 
 ## Frontend - Account Details View
-- [ ] Create detailed account view page
-- [ ] Display all account information with formatting
+- [x] Create detailed account view page
+- [x] Display all account information with formatting
 - [ ] Show all custom field values
 - [ ] Display account history and audit logs
-- [ ] Add copy-to-clipboard functionality for sensitive data
+- [x] Add copy-to-clipboard functionality for sensitive data
 
 ## Frontend - Notifications
-- [ ] Implement owner notification system
-- [ ] Create notification display component
-- [ ] Add notification history page
+- [x] Implement owner notification system
+- [x] Create notification display component
+- [x] Add notification history page
 - [ ] Implement real-time notification updates
 
 ## Frontend - Styling & Design
-- [ ] Define elegant color palette and design tokens
-- [ ] Apply consistent typography and spacing
-- [ ] Create reusable styled components
-- [ ] Implement smooth animations and transitions
-- [ ] Ensure dark/light theme support
+- [x] Define elegant color palette and design tokens
+- [x] Apply consistent typography and spacing
+- [x] Create reusable styled components
+- [x] Implement smooth animations and transitions
+- [x] Ensure dark/light theme support
 - [ ] Optimize for accessibility (WCAG compliance)
 
 ## Testing
@@ -83,3 +83,10 @@
 - [ ] Test authentication and authorization
 - [ ] Performance optimization
 - [ ] Create checkpoint and prepare for deployment
+
+## Recent Updates (Current Session)
+- [x] Added edit/update functionality to TagsPage with dialog and mutations
+- [x] Added edit/update functionality to CategoriesPage with dialog and mutations
+- [x] Added edit/update functionality to CustomFieldsPage with dialog and mutations
+- [x] Updated DashboardLayout with proper navigation menu items (Dashboard, Accounts, Categories, Tags, Custom Fields, Notifications)
+- [x] Fixed sidebar active state detection to work with nested routes
